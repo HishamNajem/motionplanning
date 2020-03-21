@@ -9,6 +9,8 @@ from car import Car
 from a_star import AStar
 import matplotlib.pyplot as plt
 import time
+import numpy as np
+
 
 class HybridAStar(object):
     def __init__(self, start, end, map_info, car, r):
@@ -24,11 +26,13 @@ class HybridAStar(object):
         return math.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
 
     def neighbors(self, p):
-        step = 5.0
+        step = 0.2
+        print("self.r",self._r)
         paths = [['l', step / self._r], ['s', step], ['r', step / self._r],
                  ['l', -step / self._r], ['s', -step], ['r', -step / self._r]]
         for path in paths:
-            xs, ys, yaws = ReedsSheppPath.gen_path(p, [path], r=self._r, section=False)
+            xs, ys, yaws = ReedsSheppPath.gen_path(
+                p, [path], r=self._r, section=False)
             if not self.is_collision_rs_car(xs, ys, yaws):
                 yield (round(xs[-1], 2), round(ys[-1], 2), round(yaws[-1], 2)), path, [xs, ys, yaws]
 
@@ -41,8 +45,9 @@ class HybridAStar(object):
 
     def h_cost(self, s):
         plan = AStar((s[0], s[1]), (self._e[0], self._e[1]), self._map_info)
-        if plan.run(display=False):
+        if plan.run(display=True):
             path = plan.reconstruct_path()
+            print("HELLO")
         d = 0
         for i in range(len(path) - 1):
             d += self.distance(path[i], path[i + 1])
@@ -66,26 +71,37 @@ class HybridAStar(object):
 
     def run(self, display=False):
         d = self.h_cost(self._s)
-        self._openset[self._s] = {'g': 0, 'h': d, 'f': d, 'camefrom':None, 'path': []}
+        print("cost:",d)
+        self._openset[self._s] = {'g': 0, 'h': d,
+                                  'f': d, 'camefrom': None, 'path': []}
         while self._openset:
             x = min(self._openset, key=lambda key: self._openset[key]['f'])
+            #print(x)
             self._closeset[x] = deepcopy(self._openset[x])
             del self._openset[x]
             if display:
                 self._map_info.close = (x[0], x[1])
             rspath = ReedsSheppPath(x, self._e, self._r)
+            #print('rspath:', rspath)
             rspath.calc_paths()
             path, _ = rspath.get_shortest_path()
-            xs, ys, yaws = ReedsSheppPath.gen_path(x, path, self._r, section=False)
+            #print('path',path)
+            xs, ys, yaws = ReedsSheppPath.gen_path(
+                x, path, self._r, section=False)
+            #print('xs',xs,'ys',ys)
             if not self.is_collision_rs_car(xs, ys, yaws):
-                self._closeset[self._e] = {'camefrom': x, 'path': [path, [xs, ys, yaws]]}
+                #print('reached inside collision iff statement')
+                self._closeset[self._e] = {
+                    'camefrom': x, 'path': [path, [xs, ys, yaws]]}
                 return True
             for y, path, line in self.neighbors(x):
+                #print('reached inside self niehbors')
                 if y in self._closeset:
                     continue
                 if display:
                     self._map_info.open = (y[0], y[1])
-                tentative_g_score = self._closeset[x]['g'] + (abs(path[1]) if path[0] == 's' else abs(path[1]) * self._r)
+                tentative_g_score = self._closeset[x]['g'] + (
+                    abs(path[1]) if path[0] == 's' else abs(path[1]) * self._r)
                 if y not in self._openset:
                     tentative_is_better = True
                 elif tentative_g_score < self._openset[y]['g']:
@@ -94,8 +110,10 @@ class HybridAStar(object):
                     tentative_is_better = False
                 if tentative_is_better:
                     d = self.h_cost(y)
-                    self._openset[y] = {'g': tentative_g_score, 'h': d, 'f': tentative_g_score+d, 'camefrom': x, 'path': [path, line]}
+                    self._openset[y] = {'g': tentative_g_score, 'h': d,
+                                        'f': tentative_g_score+d, 'camefrom': x, 'path': [path, line]}
         return False
+
 
 def main1():
     m = MapInfo(60, 40)
@@ -105,7 +123,8 @@ def main1():
     m.end = (50, 30, math.pi / 2)
     car.set_position(m.start)
     car.show()
-    m.obstacle = [(20, i) for i in range(30)] + [(40, 40 - i) for i in range(30)]
+    m.obstacle = [(20, i) for i in range(30)] + [(40, 40 - i)
+                                                 for i in range(30)]
     m.update()
     raw_input('enter to start ...')
     plan = HybridAStar(m.start, m.end, m, car, r=5.0)
@@ -119,12 +138,13 @@ def main1():
             m.show()
             m.start = (10, 10, math.pi / 2)
             m.end = (50, 30, math.pi / 2)
-            m.obstacle = [(20, i) for i in range(30)] + [(40, 40 - i) for i in range(30)]
+            m.obstacle = [(20, i) for i in range(30)] + \
+                [(40, 40 - i) for i in range(30)]
             m.path = zip(xs, ys)
             car.set_position([xs[i], ys[i], yaws[i]])
             car.show()
             plt.pause(0.1)
-    m.wait_close()
+
 
 def main2():
     m = MapInfo(60, 40)
@@ -134,14 +154,15 @@ def main2():
     m.show()
     m.start = start
     m.end = end
-    ob = [(40, i) for i in range(15)] + [(50, i) for i in range(15)] + [(i, 15) for i in range(40)]
+    ob = [(40, i) for i in range(15)] + [(50, i)
+                                         for i in range(15)] + [(i, 15) for i in range(40)]
     m.obstacle = ob
     car.set_position(m.start)
     car.show()
     m.update()
     raw_input('enter to start ...')
     plan = HybridAStar(m.start, m.end, m, car, r=5.0)
-    if plan.run(True):
+    if plan.run(False):
         xs, ys, yaws = plan.reconstruct_path()
         m.path = zip(xs, ys)
         m.update()
@@ -157,23 +178,23 @@ def main2():
             car.set_position([xs[i], ys[i], yaws[i]])
             car.show()
             plt.pause(0.1)
-    m.wait_close()
 
-def main3():
-    m = MapInfo(60, 25)
-    car = Car(10.0, 5.0)
-    start = (10, 15, 0)
-    end = (35, 5, 0)
+
+def main3():    
+    m = MapInfo(2, 1.115)
+    car = Car(.14, .115)
+    start = (0.1, 0.9, 3*math.pi/2)
+    end = (1.6, 0.5, math.pi/2)
     m.show()
     m.start = start
     m.end = end
-    ob = [(30, i) for i in range(10)] + [(45, i) for i in range(10)] + [(i, 10) for i in range(31)] + [(i+45, 10) for i in range(15)]
+    ob = [(i, 0.5) for i in np.linspace(1, 1.25, num=100)]+[(1.25, i) for i in np.linspace(0.5, 1.115, num=100)]+ [(0.3, i) for i in np.linspace(0.5, 1.115, num=100)] + [(0.6,i) for i in np.linspace(0,0.5,num=100)]
     m.obstacle = ob
     car.set_position(m.start)
     car.show()
     m.update()
     raw_input('enter to start ...')
-    plan = HybridAStar(m.start, m.end, m, car, r=5.0)
+    plan = HybridAStar(m.start, m.end, m, car, r=0.2)
     if plan.run(True):
         xs, ys, yaws = plan.reconstruct_path()
         m.path = zip(xs, ys)
@@ -189,8 +210,9 @@ def main3():
             m.path = zip(xs, ys)
             car.set_position([xs[i], ys[i], yaws[i]])
             car.show()
-            plt.pause(0.1)
+            plt.pause(1)
     m.wait_close()
+
 
 if __name__ == "__main__":
     main3()

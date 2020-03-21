@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import math
 from reeds_shepp_path import ReedsSheppPath, draw_point
 
+
 class Car(object):
     def __init__(self, l, w):
         self._l = l
@@ -41,12 +42,13 @@ class Car(object):
         draw_point(self._pos, self._l / 2.0)
         plt.plot(self._outline_x, self._outline_y, color='black')
 
+
 if __name__ == "__main__":
-    car = Car(2.0, 1.0)
+    car = Car(.14, .115)
     plt.figure()
-    start = [1, 1, math.pi / 3]
-    end = [5, 10, -math.pi / 2]
-    r = 5.0
+    start = [0, 0, math.pi]
+    end = [1, 1.5, -math.pi / 2]
+    r = 1
     rspath = ReedsSheppPath(start, end, r)
     rspath.calc_paths()
     path, _ = rspath.get_shortest_path()

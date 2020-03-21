@@ -11,7 +11,7 @@ def draw_point(point, arrow_length=0.5):
     plt.arrow(point[0], point[1], arrow_length * cos(point[2]), arrow_length * sin(point[2]), head_width=0.05)
 
 class ReedsSheppPath(object):
-    def __init__(self, start, end, r=1.0):
+    def __init__(self, start, end, r=0.1):
         self._s = start
         self._e = end
         self._r = r
@@ -435,7 +435,7 @@ class ReedsSheppPath(object):
 
     @classmethod
     def gen_path(cls, s, path, r=1.0, section=True):
-        def calc_TurnCenter(point, dir='l', r=1.0):
+        def calc_TurnCenter(point, dir='l', r=0.1):
             if dir == 'l':
                 ang = point[2] + pi / 2
             elif dir == 'r':
