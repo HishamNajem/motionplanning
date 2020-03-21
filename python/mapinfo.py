@@ -60,24 +60,27 @@ class MapInfo(object):
         plt.plot(t[0], t[1], 's', color='black')
 
     def is_collision(self, **kwargs):
+        #hybrid
+        m = 0.10
+        #m = 0.2
         if 'path' in kwargs:
             px, py = kwargs['path']
             for p in zip(px, py):
                 d, _ = self._okdtree.query(p)
-                if d <= 1.0 or p[0] < 0 or p[0] > self.width or p[1] < 0 or p[1] > self.height:
+                if d <= m or p[0] < 0 or p[0] > self.width or p[1] < 0 or p[1] > self.height:
                     return True
             return False
         if 'car_outline' in kwargs:
             px, py = kwargs['car_outline']
             for p in zip(px, py):
                 d, _ = self._okdtree.query(p)
-                if d <= 1.0 or p[0] < 0 or p[0] > self.width or p[1] < 0 or p[1] > self.height:
+                if d <= m or p[0] < 0 or p[0] > self.width or p[1] < 0 or p[1] > self.height:
                     return True
             return False
         if 'point' in kwargs:
             p = kwargs['point']
             d, _ = self._okdtree.query(p)
-            if d <= 1.0 or p[0] < 0 or p[0] > self.width or p[1] < 0 or p[1] > self.height:
+            if d <= m or p[0] < 0 or p[0] > self.width or p[1] < 0 or p[1] > self.height:
                 return True
             return False
 
